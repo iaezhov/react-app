@@ -1,7 +1,12 @@
 import './App.css';
-import Button from './components/Button/Button';
+import Body from './layouts/Body/Body';
+import LeftPanel from './layouts/LeftPanel/LeftPanel';
 import CardButton from './components/CardButton/CardButton';
-import JurnalItem from './components/JurnalItem/JurnalItem';
+import Header from './components/Header/Header';
+import JurnalItem from './components/JournalItem/JournalItem';
+import JournalAddButton from './components/JournalAddButton/JournalAddButton';
+import JournalList from './components/JournalList/JournalList';
+import JournalForm from './components/JournalForm/JournalForm';
 
 function App() {
 
@@ -18,26 +23,31 @@ function App() {
 		}
 	];
 	return (
-		<>
-			<h1>Заголовок</h1>
-			<p>Проект</p>
-			<Button />
-			<CardButton>Новое воспоминнание</CardButton>
-			<CardButton>
-				<JurnalItem
-					title={data[0].title}
-					text={data[0].text}
-					date={data[0].date}
-				/>
-			</CardButton>
-			<CardButton>
-				<JurnalItem
-					title={data[1].title}
-					text={data[1].text}
-					date={data[1].date}
-				/>
-			</CardButton>
-		</>
+		<div className='app'>
+			<LeftPanel>
+				<Header />
+				<JournalAddButton />
+				<JournalList>
+					<CardButton>
+						<JurnalItem
+							title={data[0].title}
+							text={data[0].text}
+							date={data[0].date}
+						/>
+					</CardButton>
+					<CardButton>
+						<JurnalItem
+							title={data[1].title}
+							text={data[1].text}
+							date={data[1].date}
+						/>
+					</CardButton>
+				</JournalList>
+			</LeftPanel>
+			<Body>
+				<JournalForm />
+			</Body>
+		</div>
 	);
 }
 

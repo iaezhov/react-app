@@ -1,8 +1,9 @@
 import './CardButton.css';
 
-function CardButton({ children }) {
+function CardButton({ children, className, onClick }) {
+	const cl = 'card-button' + (className ? ' ' + className : '');
 	return (
-		<button className='card-button'>{children}</button>
+		<button className={cl} onClick={onClick}>{children}</button>
 	);
 }
 
