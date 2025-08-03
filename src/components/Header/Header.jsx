@@ -1,9 +1,13 @@
-import './Header.css';
+import styles from './Header.module.css';
 
 function Header() {
 	return (
 		<>
-			<img src="/logo.svg" alt="Логотип" className='logo' />
+			<img
+				src="/logo.svg"
+				alt="Логотип"
+				className={styles.logo}
+			/>
 		</>
 	);
 }
