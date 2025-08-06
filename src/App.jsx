@@ -5,32 +5,18 @@ import Header from './components/Header/Header';
 import JournalAddButton from './components/JournalAddButton/JournalAddButton';
 import JournalList from './components/JournalList/JournalList';
 import JournalForm from './components/JournalForm/JournalForm';
-import { useState } from 'react';
+import { useLocalStorage } from './hooks/use-localstorage.hook.js';
 
-const INITIAL_DATA = [{
-	id: crypto.randomUUID(),
-	title: 'Подготовка к обновлению курсов',
-	text: 'Сегодня провёл весь день за подготовкой новых материалов.',
-	date: new Date()
-},
-{
-	id: crypto.randomUUID(),
-	title: 'Поход в годы',
-	text: 'Думал, что очень много време...',
-	date: new Date()
-}];
 
 function App() {
-	const [items, setItems] = useState(INITIAL_DATA);
+	const [items, setItems] = useLocalStorage('journalItems', []);
 
 	const addJournalItem = (item) => {
-		setItems(prevItems => [
-			...prevItems,
+		setItems([
+			...items,
 			{
-				id: crypto.randomUUID(),
-				title: item.title,
-				text: item.post,
-				date: new Date(item.date)
+				...item,
+				id: crypto.randomUUID()
 			}
 		]);
 	};

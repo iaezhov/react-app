@@ -1,50 +1,82 @@
-import { useState } from 'react';
+import { useEffect, useReducer, useRef } from 'react';
 import cn from 'classnames';
 import Button from '../Button/Button';
+import Input from '../Input/Input';
 import styles from './JournalForm.module.css';
+import { formReducer, INITIAL_STATE } from './JournalForm.state';
+
+function formatDate(timestamp) {
+	if (!timestamp) {
+		return '';
+	}
+	return new Date(+timestamp).toISOString().split('T')[0];
+}
 
 function JournalForm({ onSubmit }) {
-	const [formValidateState, setFormValidateState] = useState({
-		title: true,
-		text: true,
-		date: true
-	});
+	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
+	const { isValid, isFromReadyToSubmit, values } = formState;
+	const titleRef = useRef();
+	const dateRef = useRef();
+	const textRef = useRef();
+
+	const onChange = (event) => {
+		dispatchForm({
+			type: 'SET_VALUE',
+			payload: { [event.target.name]: event.target.value }
+		});
+	};
+
+	const focusError = ({ title, date, text }) => {
+		switch(true) {
+		case !title:
+			titleRef.current.focus();
+			break;
+		case !date:
+			dateRef.current.focus();
+			break;
+		case !text:
+			textRef.current.focus();
+			break;
+		default: return;
+		}
+	};
+
 	const submit = (event) => {
 		event.preventDefault();
-		const formData = new FormData(event.target);
-		const data = Object.fromEntries(formData.entries());
-		let isValid = true;
-		if (!data.title?.trim()) {
-			setFormValidateState(prevState => ({ ...prevState, title: false }));
-			isValid = false;
-		} else {
-			setFormValidateState(prevState => ({ ...prevState, title: true }));
-		}
-		if (!data.text?.trim()) {
-			setFormValidateState(prevState => ({ ...prevState, text: false }));
-			isValid = false;
-		} else {
-			setFormValidateState(prevState => ({ ...prevState, text: true }));
-		}
-		if (!data.date) {
-			setFormValidateState(prevState => ({ ...prevState, date: false }));
-			isValid = false;
-		} else {
-			setFormValidateState(prevState => ({ ...prevState, date: true }));
-		}
-		if (!isValid) {
-			console.log('Форма не валидна');
-			return;
-		}
-		onSubmit(data);
+		dispatchForm({ type: 'SUBMIT' });
 	};
+
+	useEffect(() => {
+		let timerId;
+		if (!isValid.title || !isValid.text || !isValid.date) {
+			focusError(isValid);
+			timerId = setTimeout(() => {
+				dispatchForm({ type: 'RESET_VALIDITY' });
+			}, 2000);
+		}
+		return () => {
+			clearTimeout(timerId);
+		};
+	}, [isValid]);
+
+	useEffect(() => {
+		if (isFromReadyToSubmit) {
+			onSubmit(values);
+			dispatchForm({ type: 'CLEAR' });
+		}
+	}, [isFromReadyToSubmit, values, onSubmit]);
+
 	return (
 		<form className={styles['journal-form']} onSubmit={submit}>
 			<div>
-				<input
+				<Input
+					ref={titleRef}
+					appearence="title"
 					type='text'
 					name="title"
-					className={cn(styles['input-title'], { [styles.invalid]: !formValidateState.title })}
+					value={values.title}
+					isValid={isValid.title}
+					onChange={onChange}
 				/>
 			</div>
 			<div className={styles['form-row']}>
@@ -52,11 +84,14 @@ function JournalForm({ onSubmit }) {
 					<img src="/calendar.svg" alt="Иконка календаря" />
 					<span>Дата</span>
 				</label>
-				<input
+				<Input
+					ref={dateRef}
 					id="date"
-					type='text'
+					type='date'
 					name="date"
-					className={cn(styles.input, { [styles.invalid]: !formValidateState.date })}
+					value={formatDate(values.date)}
+					isValid={isValid.date}
+					onChange={onChange}
 				/>
 			</div>
 			<div className={styles['form-row']}>
@@ -64,19 +99,23 @@ function JournalForm({ onSubmit }) {
 					<img src="/folder.svg" alt="Иконка папки" />
 					<span>Метки</span>
 				</label>
-				<input
+				<Input
 					id="tag"
 					type='text'
 					name="tag"
-					className={cn(styles.input)}
+					value={values.tag}
+					onChange={onChange}
 				/>
 			</div>
 			<textarea
+				ref={textRef}
 				name="text"
 				id=""
 				cols="30"
 				rows="30"
-				className={cn(styles.input, { [styles.invalid]: !formValidateState.text })}
+				value={values.text}
+				className={cn(styles.input, { [styles.invalid]: !isValid.text })}
+				onChange={onChange}
 			/>
 			<Button text="Сохранить" />
 		</form>

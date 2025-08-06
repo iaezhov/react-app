@@ -7,7 +7,7 @@ function JournalList({ items }) {
 		return <div className='journal-list'><p>Записей пока нет, добавьте первую</p></div>;
 	}
 
-	const sortItems = (a, b) => new Date(b.date) - new Date(a.date);
+	const sortItems = (a, b) => b.date - a.date;
 
 	return (
 		<div className='journal-list'>
