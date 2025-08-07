@@ -6,6 +6,7 @@ import JournalAddButton from './components/JournalAddButton/JournalAddButton';
 import JournalList from './components/JournalList/JournalList';
 import JournalForm from './components/JournalForm/JournalForm';
 import { useLocalStorage } from './hooks/use-localstorage.hook.js';
+import { UserContext } from './context/user.context.js';
 
 
 function App() {
@@ -22,16 +23,18 @@ function App() {
 	};
 
 	return (
-		<div className='app'>
-			<LeftPanel>
-				<Header />
-				<JournalAddButton />
-				<JournalList items={items}/>
-			</LeftPanel>
-			<Body>
-				<JournalForm onSubmit={addJournalItem} />
-			</Body>
-		</div>
+		<UserContext.Provider value={{ userId: 1 }}>
+			<div className='app'>
+				<LeftPanel>
+					<Header />
+					<JournalAddButton />
+					<JournalList items={items}/>
+				</LeftPanel>
+				<Body>
+					<JournalForm onSubmit={addJournalItem} />
+				</Body>
+			</div>
+		</UserContext.Provider>
 	);
 }
 
