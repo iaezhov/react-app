@@ -8,7 +8,8 @@ export const INITIAL_STATE = {
 		text: '',
 		title: '',
 		date: '',
-		tag: ''
+		tag: '',
+		userId: null
 	},
 	isFromReadyToSubmit: false
 };

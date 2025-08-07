@@ -1,11 +1,15 @@
 // import styles from './UserSelect.module.css';
 
-function UserSelect({ changedUser }) {
+import { useContext } from 'react';
+import { UserContext } from '../../context/user.context.js';
+
+function UserSelect() {
+	const { userId, setUserId } = useContext(UserContext);
 	const changeUser = (event) => {
-		changedUser(event.target.value);
+		setUserId(+event.target.value);
 	};
 	return (
-		<select name="user" id="user" onChange={changeUser}>
+		<select name="user" id="user" value={userId} onChange={changeUser}>
 			<option value="1">Антон</option>
 			<option value="2">Вася</option>
 		</select>
