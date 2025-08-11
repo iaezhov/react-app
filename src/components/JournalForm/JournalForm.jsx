@@ -1,4 +1,4 @@
-import { useContext, useEffect, useReducer, useRef } from 'react';
+import { useCallback, useContext, useEffect, useReducer, useRef } from 'react';
 import cn from 'classnames';
 import Button from '../Button/Button';
 import Input from '../Input/Input';
@@ -13,7 +13,7 @@ function formatDate(timestamp) {
 	return new Date(+timestamp).toISOString().split('T')[0];
 }
 
-function JournalForm({ onSubmit }) {
+function JournalForm({ onSubmit, onDelete, data }) {
 	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
 	const { isValid, isFromReadyToSubmit, values } = formState;
 	const titleRef = useRef();
@@ -48,6 +48,19 @@ function JournalForm({ onSubmit }) {
 		dispatchForm({ type: 'SUBMIT' });
 	};
 
+	const clearForm = useCallback(() => {
+		dispatchForm({ type: 'CLEAR' });
+		dispatchForm({
+			type: 'SET_VALUE',
+			payload: { userId }
+		});
+	}, [userId]);
+
+	const deleteItem = () => {
+		onDelete(data.id);
+		clearForm();
+	};
+
 	useEffect(() => {
 		let timerId;
 		if (!isValid.title || !isValid.text || !isValid.date) {
@@ -64,9 +77,9 @@ function JournalForm({ onSubmit }) {
 	useEffect(() => {
 		if (isFromReadyToSubmit) {
 			onSubmit(values);
-			dispatchForm({ type: 'CLEAR' });
+			clearForm();
 		}
-	}, [isFromReadyToSubmit, values, onSubmit]);
+	}, [isFromReadyToSubmit, values, onSubmit, clearForm]);
 
 	useEffect(() => {
 		dispatchForm({
@@ -74,10 +87,21 @@ function JournalForm({ onSubmit }) {
 			payload: { userId }
 		});
 	}, [userId]);
+
+	useEffect(() => {
+		if (!data) {
+			clearForm();
+		} else {
+			dispatchForm({
+				type: 'SET_VALUE',
+				payload: { ...data }
+			});
+		}
+	}, [data, clearForm]);
+
 	return (
 		<form className={styles['journal-form']} onSubmit={submit}>
-			<div>UserId: {userId}</div>
-			<div>
+			<div className={styles['form-row']}>
 				<Input
 					ref={titleRef}
 					appearence="title"
@@ -87,6 +111,15 @@ function JournalForm({ onSubmit }) {
 					isValid={isValid.title}
 					onChange={onChange}
 				/>
+				{data?.id && (
+					<button
+						className={styles['delete']}
+						type='button'
+						onClick={deleteItem}
+					>
+						<img src="/archive.svg" alt="Кнопка удалить" />
+					</button>
+				)}
 			</div>
 			<div className={styles['form-row']}>
 				<label htmlFor="date" className={styles['form-lable']}>
@@ -126,7 +159,7 @@ function JournalForm({ onSubmit }) {
 				className={cn(styles.input, { [styles.invalid]: !isValid.text })}
 				onChange={onChange}
 			/>
-			<Button text="Сохранить" />
+			<Button>Сохранить</Button>
 		</form>
 	);
 }
