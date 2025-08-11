@@ -5,47 +5,58 @@ import Header from './components/Header/Header';
 import JournalAddButton from './components/JournalAddButton/JournalAddButton';
 import JournalList from './components/JournalList/JournalList';
 import JournalForm from './components/JournalForm/JournalForm';
+import { useLocalStorage } from './hooks/use-localstorage.hook.js';
+import { UserContextProvider } from './context/user.context.jsx';
 import { useState } from 'react';
 
-const INITIAL_DATA = [{
-	id: crypto.randomUUID(),
-	title: 'Подготовка к обновлению курсов',
-	text: 'Сегодня провёл весь день за подготовкой новых материалов.',
-	date: new Date()
-},
-{
-	id: crypto.randomUUID(),
-	title: 'Поход в годы',
-	text: 'Думал, что очень много време...',
-	date: new Date()
-}];
-
 function App() {
-	const [items, setItems] = useState(INITIAL_DATA);
+	const [items, setItems] = useLocalStorage('journalItems', []);
+	const [selectedItem, setSelectedItem] = useState(null);
 
 	const addJournalItem = (item) => {
-		setItems(prevItems => [
-			...prevItems,
+		if (item.id) {
+			setItems(items.map(el => el.id === item.id ? item : el));
+			return;
+		}
+
+		setItems([
+			...items,
 			{
-				id: crypto.randomUUID(),
-				title: item.title,
-				text: item.post,
-				date: new Date(item.date)
+				...item,
+				id: crypto.randomUUID()
 			}
 		]);
 	};
 
+	const deleteItem = (id) => {
+		setItems([...items.filter(item => item.id !== id)]);
+		clearSelectedItem();
+	};
+
+	const clearSelectedItem = () => {
+		setSelectedItem(null);
+	};
+
 	return (
-		<div className='app'>
-			<LeftPanel>
-				<Header />
-				<JournalAddButton />
-				<JournalList items={items}/>
-			</LeftPanel>
-			<Body>
-				<JournalForm onSubmit={addJournalItem} />
-			</Body>
-		</div>
+		<UserContextProvider>
+			<div className='app'>
+				<LeftPanel>
+					<Header />
+					<JournalAddButton onClick={clearSelectedItem}/>
+					<JournalList
+						items={items}
+						setItem={setSelectedItem}
+					/>
+				</LeftPanel>
+				<Body>
+					<JournalForm
+						onSubmit={addJournalItem}
+						onDelete={deleteItem}
+						data={selectedItem}
+					/>
+				</Body>
+			</div>
+		</UserContextProvider>
 	);
 }
 

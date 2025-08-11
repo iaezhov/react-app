@@ -1,20 +1,165 @@
+import { useCallback, useContext, useEffect, useReducer, useRef } from 'react';
+import cn from 'classnames';
 import Button from '../Button/Button';
-import './JournalForm.css';
+import Input from '../Input/Input';
+import styles from './JournalForm.module.css';
+import { formReducer, INITIAL_STATE } from './JournalForm.state';
+import { UserContext } from '../../context/user.context';
 
-function JournalForm({ onSubmit }) {
+function formatDate(timestamp) {
+	if (!timestamp) {
+		return '';
+	}
+	return new Date(+timestamp).toISOString().split('T')[0];
+}
+
+function JournalForm({ onSubmit, onDelete, data }) {
+	const [formState, dispatchForm] = useReducer(formReducer, INITIAL_STATE);
+	const { isValid, isFromReadyToSubmit, values } = formState;
+	const titleRef = useRef();
+	const dateRef = useRef();
+	const textRef = useRef();
+	const { userId } = useContext(UserContext);
+
+	const onChange = (event) => {
+		dispatchForm({
+			type: 'SET_VALUE',
+			payload: { [event.target.name]: event.target.value }
+		});
+	};
+
+	const focusError = ({ title, date, text }) => {
+		switch(true) {
+		case !title:
+			titleRef.current.focus();
+			break;
+		case !date:
+			dateRef.current.focus();
+			break;
+		case !text:
+			textRef.current.focus();
+			break;
+		default: return;
+		}
+	};
+
 	const submit = (event) => {
 		event.preventDefault();
-		const formData = new FormData(event.target);
-		const data = Object.fromEntries(formData.entries());
-		onSubmit(data);
+		dispatchForm({ type: 'SUBMIT' });
 	};
+
+	const clearForm = useCallback(() => {
+		dispatchForm({ type: 'CLEAR' });
+		dispatchForm({
+			type: 'SET_VALUE',
+			payload: { userId }
+		});
+	}, [userId]);
+
+	const deleteItem = () => {
+		onDelete(data.id);
+		clearForm();
+	};
+
+	useEffect(() => {
+		let timerId;
+		if (!isValid.title || !isValid.text || !isValid.date) {
+			focusError(isValid);
+			timerId = setTimeout(() => {
+				dispatchForm({ type: 'RESET_VALIDITY' });
+			}, 2000);
+		}
+		return () => {
+			clearTimeout(timerId);
+		};
+	}, [isValid]);
+
+	useEffect(() => {
+		if (isFromReadyToSubmit) {
+			onSubmit(values);
+			clearForm();
+		}
+	}, [isFromReadyToSubmit, values, onSubmit, clearForm]);
+
+	useEffect(() => {
+		dispatchForm({
+			type: 'SET_VALUE',
+			payload: { userId }
+		});
+	}, [userId]);
+
+	useEffect(() => {
+		if (!data) {
+			clearForm();
+		} else {
+			dispatchForm({
+				type: 'SET_VALUE',
+				payload: { ...data }
+			});
+		}
+	}, [data, clearForm]);
+
 	return (
-		<form className='journal-form' onSubmit={submit}>
-			<input type='text' name="title" />
-			<input type='date' name="date" />
-			<input type='text' name="tag" />
-			<textarea name="text" id="" cols="30" rows="30" />
-			<Button text="Сохранить" />
+		<form className={styles['journal-form']} onSubmit={submit}>
+			<div className={styles['form-row']}>
+				<Input
+					ref={titleRef}
+					appearence="title"
+					type='text'
+					name="title"
+					value={values.title}
+					isValid={isValid.title}
+					onChange={onChange}
+				/>
+				{data?.id && (
+					<button
+						className={styles['delete']}
+						type='button'
+						onClick={deleteItem}
+					>
+						<img src="/archive.svg" alt="Кнопка удалить" />
+					</button>
+				)}
+			</div>
+			<div className={styles['form-row']}>
+				<label htmlFor="date" className={styles['form-lable']}>
+					<img src="/calendar.svg" alt="Иконка календаря" />
+					<span>Дата</span>
+				</label>
+				<Input
+					ref={dateRef}
+					id="date"
+					type='date'
+					name="date"
+					value={formatDate(values.date)}
+					isValid={isValid.date}
+					onChange={onChange}
+				/>
+			</div>
+			<div className={styles['form-row']}>
+				<label htmlFor="tag" className={styles['form-lable']}>
+					<img src="/folder.svg" alt="Иконка папки" />
+					<span>Метки</span>
+				</label>
+				<Input
+					id="tag"
+					type='text'
+					name="tag"
+					value={values.tag}
+					onChange={onChange}
+				/>
+			</div>
+			<textarea
+				ref={textRef}
+				name="text"
+				id=""
+				cols="30"
+				rows="30"
+				value={values.text}
+				className={cn(styles.input, { [styles.invalid]: !isValid.text })}
+				onChange={onChange}
+			/>
+			<Button>Сохранить</Button>
 		</form>
 	);
 }

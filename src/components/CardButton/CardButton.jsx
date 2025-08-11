@@ -1,9 +1,13 @@
-import './CardButton.css';
+import styles from './CardButton.module.css';
+import cn from 'classnames';
 
-function CardButton({ children, className, onClick }) {
-	const cl = 'card-button' + (className ? ' ' + className : '');
+function CardButton({ children, className, ...props }) {
+	const classes = cn(styles['card-button'], className);
 	return (
-		<button className={cl} onClick={onClick}>{children}</button>
+		<button
+			className={classes}
+			{...props}
+		>{children}</button>
 	);
 }
 
